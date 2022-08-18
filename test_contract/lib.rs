@@ -55,6 +55,11 @@ mod test_contract {
         }
 
         #[ink(message)]
+        pub fn echo_128(&self, what: u128) -> u128 {
+            what
+        }
+
+        #[ink(message)]
         pub fn get_int_storage(&self) -> u64 {
             self.int_storage
         }
@@ -106,6 +111,20 @@ mod test_contract {
                 }
             }
             vec
+        }
+
+        #[ink(message, payable)]
+        pub fn echo_payable(&mut self) -> u128 {
+            self.env().transferred_value()
+        }
+
+        #[ink(message, payable)]
+        pub fn result_payable(&mut self, compare: u128) -> Result<()> {
+            if self.env().transferred_value() < compare {
+                return Err(Error::TestError)
+            }
+
+            Ok(())
         }
     }
 }
