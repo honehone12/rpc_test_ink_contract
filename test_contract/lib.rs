@@ -66,12 +66,16 @@ mod test_contract {
 
         #[ink(message)]
         pub fn add_storage(&mut self, add: u64) -> u64 {
-            self.int_storage.checked_add(add).unwrap_or(0)
+            let current = self.int_storage;
+            self.int_storage = current.checked_add(add).unwrap_or(current); 
+            self.int_storage
         }
 
         #[ink(message)]
         pub fn add_storage_result(&mut self, add: u64) -> Result<u64> {
-            self.int_storage.checked_add(add).ok_or(Error::TestError)
+            let current = self.int_storage;
+            self.int_storage = current.checked_add(add).ok_or(Error::TestError)?; 
+            Ok(self.int_storage)
         }
 
         #[ink(message)]
