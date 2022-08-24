@@ -87,6 +87,16 @@ mod test_contract {
         }
 
         #[ink(message)]
+        pub fn add_storage_two_args(&mut self, add1: u64, add2: u64) -> u64 {
+            let current = self.int_storage;
+            self.int_storage = current.checked_add(add1 + add2).unwrap_or(current);
+            self.env().emit_event(IntStorageChanged {
+                current: self.int_storage
+            }); 
+            self.int_storage
+        }
+
+        #[ink(message)]
         pub fn add_storage_result(&mut self, add: u64) -> Result<u64> {
             let current = self.int_storage;
             self.int_storage = current.checked_add(add).ok_or(Error::TestError)?; 
@@ -94,6 +104,16 @@ mod test_contract {
                 current: self.int_storage
             });
             Ok(self.int_storage)
+        }
+
+        #[ink(message)]
+        pub fn add_storage_three_args(&mut self, add1: u64, add2: u64, add3: u64) -> u64 {
+            let current = self.int_storage;
+            self.int_storage = current.checked_add(add1 + add2 + add3).unwrap_or(current);
+            self.env().emit_event(IntStorageChanged {
+                current: self.int_storage
+            }); 
+            self.int_storage
         }
 
         #[ink(message)]
