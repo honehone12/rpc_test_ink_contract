@@ -24,6 +24,18 @@ mod test_contract {
         Some(Vec<u64>)
     }
 
+    #[ink(event)]
+    pub struct IntStorageChanged {
+        current: u64
+    }
+
+    #[ink(event)]
+    pub struct MapStorageChanged {
+        key: u64,
+        #[ink(topic)]
+        current: CustomOption
+    }
+
     #[ink(storage)]
     #[derive(Default, ink_storage::traits::SpreadAllocate)]
     pub struct TestContract {
@@ -67,7 +79,10 @@ mod test_contract {
         #[ink(message)]
         pub fn add_storage(&mut self, add: u64) -> u64 {
             let current = self.int_storage;
-            self.int_storage = current.checked_add(add).unwrap_or(current); 
+            self.int_storage = current.checked_add(add).unwrap_or(current);
+            self.env().emit_event(IntStorageChanged {
+                current: self.int_storage
+            }); 
             self.int_storage
         }
 
@@ -75,6 +90,9 @@ mod test_contract {
         pub fn add_storage_result(&mut self, add: u64) -> Result<u64> {
             let current = self.int_storage;
             self.int_storage = current.checked_add(add).ok_or(Error::TestError)?; 
+            self.env().emit_event(IntStorageChanged {
+                current: self.int_storage
+            });
             Ok(self.int_storage)
         }
 
@@ -104,7 +122,7 @@ mod test_contract {
         }
 
         #[ink(message)]
-        pub fn swap_map_storage(&mut self, key: u64, vec: CustomOption) -> CustomOption {
+        pub fn swap_map_storage(&mut self, key: u64, vec: CustomOption) -> Result<()> {
             match vec {
                 CustomOption::None => {
                     let v: Vec<u64> = ink_prelude::vec![];
@@ -114,7 +132,11 @@ mod test_contract {
                     self.map_storage.insert(key, v);
                 }
             }
-            vec
+            self.env().emit_event(MapStorageChanged {
+                key,
+                current: vec
+            });
+            Ok(())
         }
 
         #[ink(message, payable)]
