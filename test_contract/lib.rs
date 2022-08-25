@@ -36,6 +36,11 @@ mod test_contract {
         current: CustomOption
     }
 
+    #[ink(event)]
+    pub struct PaidFromContract {
+        amount: u128
+    }
+
     #[ink(storage)]
     #[derive(Default, ink_storage::traits::SpreadAllocate)]
     pub struct TestContract {
@@ -97,16 +102,6 @@ mod test_contract {
         }
 
         #[ink(message)]
-        pub fn add_storage_result(&mut self, add: u64) -> Result<u64> {
-            let current = self.int_storage;
-            self.int_storage = current.checked_add(add).ok_or(Error::TestError)?; 
-            self.env().emit_event(IntStorageChanged {
-                current: self.int_storage
-            });
-            Ok(self.int_storage)
-        }
-
-        #[ink(message)]
         pub fn add_storage_three_args(&mut self, add1: u64, add2: u64, add3: u64) -> u64 {
             let current = self.int_storage;
             self.int_storage = current.checked_add(add1 + add2 + add3).unwrap_or(current);
@@ -114,6 +109,16 @@ mod test_contract {
                 current: self.int_storage
             }); 
             self.int_storage
+        }
+
+        #[ink(message)]
+        pub fn add_storage_result(&mut self, add: u64) -> Result<u64> {
+            let current = self.int_storage;
+            self.int_storage = current.checked_add(add).ok_or(Error::TestError)?; 
+            self.env().emit_event(IntStorageChanged {
+                current: self.int_storage
+            });
+            Ok(self.int_storage)
         }
 
         #[ink(message)]
@@ -161,15 +166,23 @@ mod test_contract {
 
         #[ink(message, payable)]
         pub fn echo_payable(&mut self) -> u128 {
-            self.env().transferred_value()
+            let paid = self.env().transferred_value();
+            self.env().emit_event(PaidFromContract {
+                amount: paid
+            });
+            paid
         }
 
         #[ink(message, payable)]
         pub fn result_payable(&mut self, compare: u128) -> Result<()> {
-            if self.env().transferred_value() < compare {
+            let paid = self.env().transferred_value(); 
+            if paid < compare {
                 return Err(Error::TestError)
             }
 
+            self.env().emit_event(PaidFromContract {
+                amount: paid
+            });
             Ok(())
         }
     }
